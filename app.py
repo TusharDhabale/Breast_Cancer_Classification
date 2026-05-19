@@ -72,7 +72,7 @@ def load_assets():
     scaler = MinMaxScaler()
     scaler.fit(feature_frame)
     
-    model = load_model("breast_cancer_model.h5", compile=False)
+    model = load_model("breast_cancer_model.keras", compile=False)
     return feature_frame.columns.tolist(), scaler, model, feature_frame
 
 FEATURE_NAMES, scaler, model, feature_frame = load_assets()

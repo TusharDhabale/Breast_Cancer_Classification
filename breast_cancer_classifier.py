@@ -320,8 +320,8 @@ def main():
     evaluate_model(model, x_test, y_test)
 
     # Optional — Save trained model
-    model.save("breast_cancer_model.h5")
-    print("\n[Done] Model saved → breast_cancer_model.h5")
+    model.save("breast_cancer_model.keras")
+    print("\n[Done] Model saved → breast_cancer_model.keras")
     print("[Done] All performance assets preserved to project directory.\n")
 
 
