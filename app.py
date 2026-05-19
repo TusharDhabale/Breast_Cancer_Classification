@@ -1,4 +1,5 @@
 import os
+from pyexpat import model
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
 import logging
@@ -7,8 +8,27 @@ logging.getLogger("tensorflow").setLevel(logging.ERROR)
 import streamlit as st
 import numpy as np
 import pandas as pd
-from tensorflow.keras.models import load_model
 from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Input
+
+def create_model():
+    model = Sequential([
+        Input(shape=(8,)),
+        Dense(64, activation='relu'),
+        Dropout(0.3),
+        Dense(32, activation='relu'),
+        Dropout(0.2),
+        Dense(1, activation='sigmoid')
+    ])
+
+    model.compile(
+        optimizer='adam',
+        loss='binary_crossentropy',
+        metrics=['accuracy']
+    )
+
+    return model
 
 # ---------------------------------------------------
 # PAGE CONFIG
@@ -71,8 +91,8 @@ def load_assets():
     
     scaler = MinMaxScaler()
     scaler.fit(feature_frame)
-    
-    model = load_model("breast_cancer_model.keras", compile=False)
+    model = create_model()
+    model.load_weights("breast_cancer_weights.weights.h5")
     return feature_frame.columns.tolist(), scaler, model, feature_frame
 
 FEATURE_NAMES, scaler, model, feature_frame = load_assets()

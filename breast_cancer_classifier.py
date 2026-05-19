@@ -105,7 +105,18 @@ def preprocess(df: pd.DataFrame):
 
     # ── Feature Matrix ──────────────────────────────────────────
     # Drop non-predictive columns
-    X_raw = df.drop(labels=["label", "id"], axis=1, errors="ignore")
+    selected_features = [
+    "radius_mean",
+    "texture_mean",
+    "perimeter_mean",
+    "area_mean",
+    "smoothness_mean",
+    "compactness_mean",
+    "concavity_mean",
+    "concave points_mean"
+]
+
+    X_raw = df[selected_features]
     print(f"[Preprocess] Feature count   : {X_raw.shape[1]}")
 
     # ── MinMax Scaling ──────────────────────────────────────────
@@ -320,8 +331,8 @@ def main():
     evaluate_model(model, x_test, y_test)
 
     # Optional — Save trained model
-    model.save("breast_cancer_model.keras")
-    print("\n[Done] Model saved → breast_cancer_model.keras")
+    model.save_weights("breast_cancer_weights.weights.h5")
+    print("\n[Done] Model saved → breast_cancer_weights.weights.h5")
     print("[Done] All performance assets preserved to project directory.\n")
 
 
