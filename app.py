@@ -1,5 +1,4 @@
 import os
-from pyexpat import model
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
 import logging
@@ -12,12 +11,15 @@ from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Input
 
+# ---------------------------------------------------
+# CREATE MODEL
+# ---------------------------------------------------
 def create_model():
     model = Sequential([
         Input(shape=(8,)),
-        Dense(64, activation='relu'),
+        Dense(128, activation='relu'),
         Dropout(0.3),
-        Dense(32, activation='relu'),
+        Dense(64, activation='relu'),
         Dropout(0.2),
         Dense(1, activation='sigmoid')
     ])
@@ -56,6 +58,7 @@ body {
 
 h1, h2, h3 {
     color: #C084FC;
+    text-align: center;
 }
 
 .stButton>button {
@@ -78,27 +81,44 @@ h1, h2, h3 {
 # ---------------------------------------------------
 # HEADER
 # ---------------------------------------------------
-st.title("🩺 Breast Cancer Classification")
+st.markdown(
+    "<h1>🩺 Breast Cancer Classification</h1>",
+    unsafe_allow_html=True
+)
 
 # ---------------------------------------------------
-# LOAD DATASET
+# LOAD DATASET + MODEL
 # ---------------------------------------------------
 @st.cache_resource
 def load_assets():
+
     df = pd.read_csv("data.csv")
-    feature_frame = df.drop(columns=["id", "diagnosis"], errors="ignore")
-    feature_frame = feature_frame.loc[:, ~feature_frame.columns.str.contains("^Unnamed")]
-    
+
+    selected_features = [
+        "radius_mean",
+        "texture_mean",
+        "perimeter_mean",
+        "area_mean",
+        "smoothness_mean",
+        "compactness_mean",
+        "concavity_mean",
+        "concave points_mean"
+    ]
+
+    feature_frame = df[selected_features]
+
     scaler = MinMaxScaler()
     scaler.fit(feature_frame)
+
     model = create_model()
     model.load_weights("breast_cancer_weights.weights.h5")
-    return feature_frame.columns.tolist(), scaler, model, feature_frame
 
-FEATURE_NAMES, scaler, model, feature_frame = load_assets()
+    return scaler, model
+
+scaler, model = load_assets()
 
 # ---------------------------------------------------
-# PROJECT DESCRIPTION
+# DESCRIPTION
 # ---------------------------------------------------
 st.markdown("""
 ## 📌 Prediction Categories
@@ -129,43 +149,34 @@ with col2:
     concave_points_mean = st.number_input("Concave Points Mean", value=0.05)
 
 # ---------------------------------------------------
-# PREDICTION BUTTON
+# PREDICTION
 # ---------------------------------------------------
 if st.button("🔍 Predict Tumor Type"):
 
-    # Create a 30-feature input dict
-    input_values = {name: 0.0 for name in FEATURE_NAMES}
-    
-    # Update with user inputs
-    input_values[FEATURE_NAMES[0]] = radius_mean
-    input_values[FEATURE_NAMES[1]] = texture_mean
-    input_values[FEATURE_NAMES[2]] = perimeter_mean
-    input_values[FEATURE_NAMES[3]] = area_mean
-    input_values[FEATURE_NAMES[4]] = smoothness_mean
-    input_values[FEATURE_NAMES[5]] = compactness_mean
-    input_values[FEATURE_NAMES[6]] = concavity_mean
-    input_values[FEATURE_NAMES[7]] = concave_points_mean
-    
-    # Create DataFrame with proper column names
-    input_df = pd.DataFrame([input_values], columns=FEATURE_NAMES)
-    
-    # Scale input
-    full_input_scaled = scaler.transform(input_df)
+    input_data = np.array([[
+        radius_mean,
+        texture_mean,
+        perimeter_mean,
+        area_mean,
+        smoothness_mean,
+        compactness_mean,
+        concavity_mean,
+        concave_points_mean
+    ]])
 
-    # Predict
-    prediction = model.predict(full_input_scaled, verbose=0)
+    input_scaled = scaler.transform(input_data)
 
-    confidence = prediction[0][0] * 100
+    prediction = model.predict(input_scaled, verbose=0)[0][0]
 
     st.header("🧠 Prediction Result")
 
-    if prediction[0][0] > 0.5:
+    if prediction >= 0.5:
         st.error(
-            f"⚠️ Malignant Tumor Detected\n\nConfidence: {confidence:.2f}%"
+            f"⚠️ Malignant Tumor Detected\n\nConfidence: {prediction*100:.2f}%"
         )
     else:
         st.success(
-            f"✅ Benign Tumor Detected\n\nConfidence: {100-confidence:.2f}%"
+            f"✅ Benign Tumor Detected\n\nConfidence: {(1-prediction)*100:.2f}%"
         )
 
 # ---------------------------------------------------
@@ -180,7 +191,7 @@ demo1, demo2 = st.columns(2)
 with demo1:
     st.success("""
     ✅ Benign Demo Input
-    
+
     Radius Mean = 12.5  
     Texture Mean = 14.0  
     Perimeter Mean = 80  
@@ -194,7 +205,7 @@ with demo1:
 with demo2:
     st.error("""
     ⚠️ Malignant Demo Input
-    
+
     Radius Mean = 18.5  
     Texture Mean = 25.0  
     Perimeter Mean = 120  

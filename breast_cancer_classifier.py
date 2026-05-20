@@ -142,51 +142,28 @@ def preprocess(df: pd.DataFrame):
 # ────────────────────────────────────────────────────────────────
 
 def build_model(input_dim: int) -> tf.keras.Model:
-    """
-    Construct the MLP architecture:
 
-        Dense(128, ReLU)  ← Input Layer  (30 features)
-        Dropout(0.5)      ← Regularization
-        Dense(64,  ReLU)  ← Hidden Layer
-        Dropout(0.5)      ← Regularization
-        Dense(1,   Sigmoid) ← Binary Output  P(Malignant)
-
-    Parameters
-    ----------
-    input_dim : int
-        Number of input features.
-
-    Returns
-    -------
-    model : compiled tf.keras.Model
-    """
     model = Sequential([
-        # Layer 1 — Input + Dense representation
-        Dense(128, input_dim=input_dim, activation="relu",
-              name="input_dense"),
 
-        # Layer 2 — Dropout regularization (50%)
-        Dropout(0.5, name="dropout_1"),
+        Dense(128, activation="relu", input_dim=input_dim),
+        Dropout(0.3),
 
-        # Layer 3 — Hidden dense layer
-        Dense(64, activation="relu", name="hidden_dense"),
+        Dense(64, activation="relu"),
+        Dropout(0.2),
 
-        # Layer 4 — Dropout regularization (50%)
-        Dropout(0.5, name="dropout_2"),
+        Dense(1, activation="sigmoid")
 
-        # Layer 5 — Binary classification output
-        # Sigmoid → P(Malignant) ∈ [0, 1]
-        Dense(1, activation="sigmoid", name="output"),
-    ], name="BreastCancerMLP")
+    ])
 
     model.compile(
-        loss="binary_crossentropy",   # H(y, ŷ) = −[y·log(ŷ) + (1−y)·log(1−ŷ)]
-        optimizer="adam",             # Adaptive Moment Estimation
-        metrics=["accuracy"],
+        optimizer="adam",
+        loss="binary_crossentropy",
+        metrics=["accuracy"]
     )
 
     print("\n[Model] Architecture Summary:")
     model.summary()
+
     return model
 
 
